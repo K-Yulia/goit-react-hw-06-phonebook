@@ -1,8 +1,9 @@
 import { Formik } from 'formik';
-import { nanoid } from 'nanoid';
 import * as Yup from 'yup';
-import PropTypes from 'prop-types';
 import { Form, Field, Btn, ErrorMessage } from './ContactForm.styled';
+import { useDispatch, useSelector } from 'react-redux';
+import { addContact } from 'redux/contactsSlice';
+import { getContacts } from 'redux/selectors';
 
 const ContactSchema = Yup.object().shape({
   name: Yup.string()
@@ -21,7 +22,22 @@ const ContactSchema = Yup.object().shape({
     .required('Required'),
 });
 
-export const ContactForm = ({ onAddContact }) => {
+export const ContactForm = () => {
+  const dispatch = useDispatch();
+  const contacts = useSelector(getContacts);
+
+  const handleSubmit = (values, { resetForm }) => {
+    const { name, number } = values;
+    const ifExist = contacts.find(contact => contact.name === name);
+
+    if (ifExist) {
+      alert(`${name}: is already in contacts`);
+      return;
+    }
+    dispatch(addContact(name, number));
+    resetForm();
+  };
+
   return (
     <Formik
       initialValues={{
@@ -29,13 +45,7 @@ export const ContactForm = ({ onAddContact }) => {
         number: '',
       }}
       validationSchema={ContactSchema}
-      onSubmit={(values, actions) => {
-        onAddContact({
-          ...values,
-          id: nanoid(),
-        });
-        actions.resetForm();
-      }}
+      onSubmit={handleSubmit}
     >
       <Form>
         <label>
@@ -52,8 +62,4 @@ export const ContactForm = ({ onAddContact }) => {
       </Form>
     </Formik>
   );
-};
-
-ContactForm.propTypes = {
-  onAddContact: PropTypes.func.isRequired,
 };
